@@ -17,4 +17,8 @@ public class CouponCountRepository {
 			.opsForValue()
 			.increment("coupon_count");
 	}
+
+	public Boolean delete() {
+		return redisTemplate.delete("coupon_count");
+	}
 }

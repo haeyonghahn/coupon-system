@@ -6,10 +6,12 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
+import com.example.api.repository.CouponCountRepository;
 import com.example.api.repository.CouponRepository;
 
 @SpringBootTest
@@ -20,6 +22,14 @@ public class ApplyServiceTest {
 
 	@Autowired
 	private CouponRepository couponRepository;
+
+	@Autowired
+	private CouponCountRepository couponCountRepository;
+
+	@BeforeEach
+	public void setUp() {
+		couponCountRepository.delete();
+	}
 
 	@Test
 	public void 한번만응모() {
