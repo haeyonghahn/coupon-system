@@ -94,3 +94,23 @@ __컨슈머 실행__
 ```yml
 docker exec -it kafka kafka-console-consumer.sh --topic testTopic --bootstrap-server localhost:9092
 ```
+
+## 프로듀서 사용하기
+__Topic 생성__   
+```
+docker exec -it kafka kafka-topics.sh --bootstrap-server localhost:9092 --create --topic coupon_create
+```
+
+__Consumer 실행__   
+```
+docker exec -it kafka kafka-console-consumer.sh --topic coupon_create --bootstrap-server localhost:9092 --key-deserializer "org.apache.kafka.common.serialization.StringDeserializer" --value-deserializer "org.apache.kafka.common.serialization.LongDeserializer"
+```
+
+## Consumer 사용하기
+__테스트가 실패하는 이유__    
+
+![image](https://github.com/haeyonghahn/coupon-system/assets/31242766/ab6f5e79-7381-4fc6-88a1-2a2c62936181)
+
+테스트가 실패한 이유는 데이터 처리가 실시간이 아니기 때문이다. 시점이 10시 1분 그리고 테스트 케이스가 종료되는 시간을 10시 2분이라고 가정해보자. 컨슈머는 데이터를 수신하고 있다가 토픽에 데이터가 전송되면 데이터를 받아서 쿠폰을 생성한다. 쿠폰이 모두 생성되는 시간을 10시 4분이라고 가정해보자. 우리의 테스트 케이스는 데이터가 전송을 완료된 시점을 기준으로 쿠폰의 개수를 가져오고 컨슈머에서는 그 시점에 아직 모두 쿠폰을 생성하지 않았기 때문에 테스트 케이스가 실패하는 것이다. 쿠폰이 100개가 정상적으로 생성되는지 확인을 하기 위해서 `Thread Slip`을 활용해 보도록 하자.
+
+카프카를 사용한다면 API에서 직접 쿠폰을 생성할 때에 비해서 `처리량`을 조절할 수 있게 된다. 처리량을 조절함에 따라서 데이터베이스의 부하를 줄일 수 있다. 다만 테스트 케이스에서 확인했다시피 쿠폰 생성까지 약간의 텀이 발생한다.
