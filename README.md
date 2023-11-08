@@ -58,3 +58,39 @@ docker exec -it CONTAINER_ID redis-cli
 ![image](https://github.com/haeyonghahn/coupon-system/assets/31242766/9b9c6952-27ee-4800-b2c5-0bd5a49173bb)
 
 MySQL이 1분에 100개 INSERT 작업이 가능하다고 가정해보자. 이 상태에서 10시 10000개의 쿠폰 생성 요청이 들어오고 10시 1분에 주문 생성 요청, 10시 2분에 회원 가입 요청이 들어오면 어떻게 될까. 첫번째로 1분에 100개씩 만개를 생성하려면 100분이 걸린다. 10시 1분, 10시 2분에 들어온 주문 생성, 회원가입 요청은 100분 이후에 생성이 된다. 타임아웃이 없다면 느리게라도 모든 요청이 처리가 되겠지만 대부분의 서비스에는 타임아웃 옵션이 설정되어 있고 그러므로 주문 회원가입 뿐만 아니라 일부분의 쿠폰도 생성이 되지 않는 오류가 발생할 수 있다. 두 번째로 짧은 시간 내에 많은 요청이 들어오게 된다면 DB 서버의 리소스를 많이 사용하게 되므로 부하가 발생하게 되고 이것은 서비스 지연 혹은 오류로 이어질 수 있다.
+
+## Kafka 작업환경 세팅
+__docker-compose.yml__   
+```yml
+version: '2'
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+  kafka:
+    image: wurstmeister/kafka:2.12-2.5.0
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      KAFKA_ADVERTISED_HOST_NAME: 127.0.0.1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+```
+
+## Kafka 알아보기
+__토픽생성__   
+```yml
+docker exec -it kafka kafka-topics.sh --bootstrap-server localhost:9092 --create --topic testTopic
+```
+__프로듀서 실행__   
+```yml
+docker exec -it kafka kafka-console-producer.sh --topic testTopic --broker-list 0.0.0.0:9092
+```
+__컨슈머 실행__   
+```yml
+docker exec -it kafka kafka-console-consumer.sh --topic testTopic --bootstrap-server localhost:9092
+```
